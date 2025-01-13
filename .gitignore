@@ -1,0 +1,63 @@
+# Byte-compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment variables and secrets
+.env
+*.env
+
+.venv
+*.venv
+secrets.json
+
+# Logs
+*.log
+*.out
+*.err
+
+# Database files
+*.sqlite3
+*.db
+*.sql
+*.db-journal
+
+# Virtual environment
+venv/
+.env/
+.venv/
+pip-wheel-metadata/
+
+# IDE and editor configurations
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Testing
+htmlcov/
+*.cover
+*.py,cover
+.coverage
+.tox/
+.cache/
+.pytest_cache/
+.nox/
+
+# Dependency directories and files
+node_modules/
+*.lock
+Pipfile
+Pipfile.lock
+
+# Migrations
+migrations/
+*/migrations/*
+
+# Static files
+staticfiles/
+media/
