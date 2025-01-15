@@ -75,9 +75,12 @@
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from schemas import GenreURLChoices, Band
 from enum import Enum
 
 app = FastAPI()
+
+
 
 
 # Model for items
@@ -160,7 +163,7 @@ def get_item(item_id: int):
         raise HTTPException(status_code=404, detail=f"Item {item_id} not found")
 
 
-# Update an item
+# Update an item 
 @app.put("/items/{item_id}", response_model=Item)
 def update_item(item_id: int, updated_item: Item):
     if item_id < len(items):
@@ -178,3 +181,31 @@ def delete_item(item_id: int):
         return {"message": "Item deleted successfully", "item": removed_item}
     else:
         raise HTTPException(status_code=404, detail=f"Item {item_id} not found")
+
+
+bandss = [
+    {'id':1, 'name':'the knights', 'genre':'Rock'},
+    {'id':2, 'name':'the knights', 'genre':'Electronics', 'albums':[{'titles':'Mater of reality', 'release_date':'1971-08-21'}]},
+    {'id':3, 'name':'the knights', 'genre':'pop'},
+    {'id':4, 'name':'the knights', 'genre':'hipo-hop'}
+]
+
+@app.get('/bands')
+async def bands() -> list[dict]:
+    return bandss
+
+@app.get('/bands_new')
+async def bands() -> list[Band]:
+    return [ Band(**b) for b in bandss]
+
+@app.get('/bands/genre/{genre}')
+async def bands_for_genre(genre:GenreURLChoices) -> list[dict]:
+    return [ b for b in bandss if b['genre'].lower() == genre.value ]
+
+@app.get('/bands/{band_id}')
+async def bands(band_id:int) -> Band:
+    band = next((b for b in bandss if b['id'] == band_id), None)
+    if band is None:
+        raise HTTPException(status_code=404, detail='Band not Found')
+    
+    return band
