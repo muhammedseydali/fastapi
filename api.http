@@ -1,0 +1,21 @@
+POST http://localhost:8000/bands/
+Content-Type: application/json
+
+{
+    "name":"new town heights",
+    "genre":"Electronic",
+    "albums":[
+        {
+            "title":"tomorrow is harvest",
+            "release_date":"2022-10-30"
+        },
+        {
+            "title":"tomorrow is harvest",
+            "release_date":"2022-10-30"
+        }
+    ]
+}
+
+
+### get request
+GET http://localhost:8000/bands/?genre=rock

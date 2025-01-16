@@ -73,12 +73,21 @@
 #     else:
 #         raise HTTPException(status_code=404, detail=f"Item {item_id} not found")
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException,Query, Depends
 from pydantic import BaseModel
-from schemas import GenreURLChoices, Band
+from schemas import GenreURLChoices, BandBase, BandCreate, BandWithId, Albums,AlbumBase
 from enum import Enum
+from typing import Annotated
+from contextlib import asynccontextmanager
+from db import init_db, get_session
+from sqlmodel import Session, select    
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
+
+app = FastAPI(lifespan=lifespan)
 
 
 
@@ -185,31 +194,64 @@ def delete_item(item_id: int):
 
 bandss = [
     {'id':1, 'name':'the knights', 'genre':'Rock'},
-    {'id':2, 'name':'the knights', 'genre':'Electronics', 'albums':[{'titles':'Mater of reality', 'release_date':'1971-08-21'}]},
+    {'id':2, 'name':'the knights', 'genre':'Electronics', 'albums':[{'title':'Mater of reality', 'release_date':'1971-08-21'}]},
     {'id':3, 'name':'the knights', 'genre':'pop'},
     {'id':4, 'name':'the knights', 'genre':'hipo-hop'}
 ]
 
 @app.get('/bands')
-async def bands(genre:GenreURLChoices | None = None) -> list[Band]:
+async def bands(genre: GenreURLChoices | None = None, has_albums: bool = False) -> list[BandBase]:
+    # Ensure all items in `bandss` have the required fields
+    band_list = [BandBase(**b) for b in bandss if 'genre' in b and 'albums' in b]
+
+    # Filter by genre if provided
     if genre:
-        return [ 
-            Band(**b) for b in bandss if b['genre'].lower() == genre.value
-        ]
-    return [Band(**b) for b in bandss]
+        band_list = [b for b in band_list if b.genre.lower() == genre.value.lower()]
+
+    # Filter by albums if has_albums is True
+    if has_albums:
+        band_list = [b for b in band_list if len(b.albums) > 0]
+
+    return band_list
+
 
 @app.get('/bands_new')
-async def bands() -> list[Band]:
-    return [ Band(**b) for b in bandss]
+async def bands() -> list[BandBase]:
+    return [ BandBase(**b) for b in bandss]
 
 @app.get('/bands/genre/{genre}')
-async def bands_for_genre(genre:GenreURLChoices) -> list[dict]:
+async def bands_for_genre(genre:GenreURLChoices | None = None, q:Annotated[str | None, Query(max_length=10)] = None, ) -> list[BandWithId ]:
     return [ b for b in bandss if b['genre'].lower() == genre.value ]
 
 @app.get('/bands/{band_id}')
-async def bands(band_id:int) -> Band:
-    band = next((b for b in bandss if b['id'] == band_id), None)
+async def bands(band_id:Annotated[int, path(title="The Band Id")],
+                session:Session = Depends(get_session)) -> BandBase:
+    band = session.get(BandBase, band_id)
     if band is None:
         raise HTTPException(status_code=404, detail='Band not Found')
     
+    return band
+
+
+# @app.post("/bands")
+# async def create_band(band_data: BandCreate) -> BandWithId:
+#     id  = bandss[-1]['id'] + 1
+#     print('idddddd', id)
+#     band = BandWithId(id=id, **band_data.model_dump()).model_dump()
+#     bandss.append(band)
+#     return band
+
+@app.post("/bands")
+async def create_band(band_data: BandCreate, session:Session = Depends(get_session)) -> BandBase:
+
+    band = BandBase(name=band_data.name, genre=band_data.genre)
+    session.add(band)
+    if band_data.albums:
+        for album in band_data.albums:
+            album_obj = Albums(title=album.title, release_date=album.release_date, band=band)
+            session.add(album_obj)
+    session.commit()
+    session.refresh(band)
+
+    # Return the new band
     return band
