@@ -73,7 +73,7 @@
 #     else:
 #         raise HTTPException(status_code=404, detail=f"Item {item_id} not found")
 
-from fastapi import FastAPI, HTTPException,Query, Depends
+from fastapi import FastAPI, HTTPException,Query, Depends,Path
 from pydantic import BaseModel
 from schemas import GenreURLChoices, BandBase, BandCreate, BandWithId, Albums,AlbumBase
 from enum import Enum
@@ -224,7 +224,7 @@ async def bands_for_genre(genre:GenreURLChoices | None = None, q:Annotated[str |
     return [ b for b in bandss if b['genre'].lower() == genre.value ]
 
 @app.get('/bands/{band_id}')
-async def bands(band_id:Annotated[int, path(title="The Band Id")],
+async def bands(band_id:Annotated[int, Path(title="The Band Id")],
                 session:Session = Depends(get_session)) -> BandBase:
     band = session.get(BandBase, band_id)
     if band is None:

@@ -2,8 +2,8 @@ POST http://localhost:8000/bands/
 Content-Type: application/json
 
 {
-    "name":"new town heights",
-    "genre":"Electronic",
+    "name":"new town height volume1",
+    "genre":"ElECTRONiC",
     "albums":[
         {
             "title":"tomorrow is harvest",
